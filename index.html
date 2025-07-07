@@ -86,19 +86,24 @@
 
   <script>
 
-console.log('[AUTO] Reload logic enabled');
+console.log('[TM] AutoReload script running');
 
-// Reload on reconnect
 window.addEventListener('online', () => {
-  console.log('[AUTO] Network reconnected, reloading...');
+  console.log('[TM] Network reconnected, reloading...');
   setTimeout(() => location.reload(), 1000);
 });
 
-// Monitor status for "closed" or "បិទ"
+window.addEventListener('offline', () => {
+  console.log('[TM] Network disconnected, waiting...');
+});
+
 window.addEventListener('load', () => {
+  console.log('[TM] Page loaded — removing iframes');
+  document.querySelectorAll('iframe').forEach(el => el.remove());
+
   const statusEl = document.querySelector('.status-title');
-  const lastReloadKey = 'auto_reload_timestamp';
-  const cooldownMs = 3000;
+  const lastReloadKey = 'tm_last_reload_time';
+  const cooldownMs = 5000; // prevent reload loop (e.g. 5 seconds)
   let lastStatus = null;
 
   const recentlyReloaded = () => {
@@ -108,19 +113,22 @@ window.addEventListener('load', () => {
 
   if (statusEl) {
     lastStatus = statusEl.textContent.trim().toLowerCase();
+
     const observer = new MutationObserver(() => {
-      const newStatus = statusEl.textContent.trim().toLowerCase();
+      const currentStatus = statusEl.textContent.trim().toLowerCase();
+
       if (
-        ['closed', 'បិទ'].includes(newStatus) &&
+        ['closed', 'បិទ'].includes(currentStatus) &&
         !['closed', 'បិទ'].includes(lastStatus) &&
         !recentlyReloaded()
       ) {
-        console.log('[AUTO] Status changed to closed — reloading...');
+        console.log('[TM] Status transitioned to closed — reloading...');
         localStorage.setItem(lastReloadKey, Date.now().toString());
         setTimeout(() => location.reload(), 800);
       }
-      if (!['closed', 'បិទ'].includes(newStatus)) {
-        lastStatus = newStatus;
+
+      if (!['closed', 'បិទ'].includes(currentStatus)) {
+        lastStatus = currentStatus;
       }
     });
 
