@@ -84,8 +84,6 @@
   </div>
 
   <script>
-    const openedTabs = [];
-
     const checkboxContainer = document.getElementById("amountCheckboxes");
     const modeSwitch = document.getElementById("modeSwitch");
     const modeLabel = document.getElementById("modeLabel");
@@ -117,7 +115,7 @@
     ];
 
     let retryLoop = null;
-   
+    let openedTabs = [];
 
     function initUI(isKHR = true) {
       checkboxContainer.innerHTML = "";
@@ -192,17 +190,21 @@
       retryLoop = null;
     };
     modeSwitch.onchange = updateModeUI;
-  window.addEventListener("DOMContentLoaded", () => {
+
    
-    initUI(true); // KHR = true, USD = false
+  localStorage.setItem("openedPanel", "true");
+       window.onload = function () {
+      initUI(true); // KHR default
+      // Open betting tabs
+      openedTabs.push(window.open("https://bc24.tv", "_blank"));
+      openedTabs.push(window.open("https://sb24.mx", "_blank"));
+      openedTabs.push(window.open("https://hh888.ai", "_blank"));
+      openedTabs.push(window.open("https://bc24.me/", "_blank"));
+     
+    };
 
-    // ✅ Open tabs only once
-    window.open("https://bc24.tv", "_blank");
-    window.open("https://sb24.mx", "_blank");
-    window.open("https://hh888.ai", "_blank");
-    window.open("https://bc24.me", "_blank");
-  });
 
+   
   </script>
 </body>
 </html>
