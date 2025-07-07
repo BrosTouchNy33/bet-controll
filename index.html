@@ -84,6 +84,47 @@
   </div>
 
   <script>
+ console.log('[AUTO] Reload logic enabled');
+
+  // Reload on reconnect
+  window.addEventListener('online', () => {
+    console.log('[AUTO] Network reconnected, reloading...');
+    setTimeout(() => location.reload(), 1000);
+  });
+
+  // Monitor status for "closed" or "បិទ"
+  window.addEventListener('load', () => {
+    const statusEl = document.querySelector('.status-title');
+    const lastReloadKey = 'auto_reload_timestamp';
+    const cooldownMs = 3000;
+    let lastStatus = null;
+
+    const recentlyReloaded = () => {
+      const last = parseInt(localStorage.getItem(lastReloadKey) || '0');
+      return Date.now() - last < cooldownMs;
+    };
+
+    if (statusEl) {
+      lastStatus = statusEl.textContent.trim().toLowerCase();
+      const observer = new MutationObserver(() => {
+        const newStatus = statusEl.textContent.trim().toLowerCase();
+        if (
+          ['closed', 'បិទ'].includes(newStatus) &&
+          !['closed', 'បិទ'].includes(lastStatus) &&
+          !recentlyReloaded()
+        ) {
+          console.log('[AUTO] Status changed to closed — reloading...');
+          localStorage.setItem(lastReloadKey, Date.now().toString());
+          setTimeout(() => location.reload(), 800);
+        }
+        if (!['closed', 'បិទ'].includes(newStatus)) {
+          lastStatus = newStatus;
+        }
+      });
+
+      observer.observe(statusEl, { childList: true, characterData: true, subtree: true });
+    }
+  });
     const checkboxContainer = document.getElementById("amountCheckboxes");
     const modeSwitch = document.getElementById("modeSwitch");
     const modeLabel = document.getElementById("modeLabel");
