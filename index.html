@@ -65,8 +65,7 @@
 <body>
   <div id="floatingQuickPanel">
     <div class="quick-checkboxes" id="amountCheckboxes"></div>
-    <div class="cg_pending_match">បិទ</div>  <!-- or បើក -->
-
+    
     <div class="limit-mode-row">
       <input type="number" id="maxSpamInput" placeholder="Max Spam" value="3" style="width: 80px;" />
       <div class="mode-switch-wrapper">
@@ -85,146 +84,147 @@
     <button class="btn btn-stop" id="stopBtnBottom">🛑 Stop</button>
   </div>
 
- <script>
-  const openedTabs = [];
-  const checkboxContainer = document.getElementById("amountCheckboxes");
-  const modeSwitch = document.getElementById("modeSwitch");
-  const modeLabel = document.getElementById("modeLabel");
-  const maxSpamInput = document.getElementById("maxSpamInput");
-
-  const khrAmounts = [
-    { value: 5000, label: '៥ពាន់' },
-    { value: 10000, label: '១មឺន' },
-    { value: 15000, label: '១មឺន5ពាន់' },
-    { value: 20000, label: '២មឺន' },
-    { value: 25000, label: '2មឺន5ពាន់' },
-    { value: 50000, label: '៥មុឺន' },
-    { value: 55000, label: '5មឺន5ពាន់' },
-    { value: 100000, label: '១០មុឺន' },
-    { value: 105000, label: '10មុឺន5ពាន់' },
-    { value: 500000, label: '៥០មុឺន' },
-    { value: 1000000, label: '១លាន' }
-  ];
-
-  const usdAmounts = [
-    { value: 1, label: '$1' },
-    { value: 2, label: '$2' },
-    { value: 5, label: '$5' },
-    { value: 10, label: '$10' },
-    { value: 15, label: '$15' },
-    { value: 20, label: '$20' },
-    { value: 50, label: '$50' },
-    { value: 100, label: '$100' }
-  ];
-
-  let retryLoop = null;
-
-  function initUI(isKHR = true) {
-    checkboxContainer.innerHTML = "";
-    const list = isKHR ? khrAmounts : usdAmounts;
-    list.forEach(({ value, label }, i) => {
-      const cb = document.createElement("input");
-      cb.type = "checkbox";
-      cb.id = `chk_${i}`;
-      cb.value = value;
-
-      const lbl = document.createElement("label");
-      lbl.appendChild(cb);
-      lbl.append(label);
-      checkboxContainer.appendChild(lbl);
-    });
-    updateModeUI();
-  }
-
-  function updateModeUI() {
-    const isReal = modeSwitch.checked;
-    modeLabel.textContent = isReal ? "Real" : "Test";
-    maxSpamInput.value = isReal ? 200 : 3;
-
-    const indexes = isReal ? [1, 2, 3, 4, 5, 6, 7, 8] : [0];
-    [...checkboxContainer.querySelectorAll("input[type=checkbox]")].forEach(cb => cb.checked = false);
-    indexes.forEach(i => {
-      const cb = document.getElementById(`chk_${i}`);
-      if (cb) cb.checked = true;
-    });
-  }
-
-  function spam(side) {
-    if (retryLoop) clearInterval(retryLoop);
-
-    const selected = [...checkboxContainer.querySelectorAll("input[type=checkbox]:checked")]
-      .map(cb => parseInt(cb.value)).filter(v => !isNaN(v));
-    if (selected.length === 0) {
-      alert("Please select amounts");
-      return;
-    }
-
-    const limit = parseInt(maxSpamInput.value || "3");
-    const isReal = modeSwitch.checked;
-    let count = 0;
-
-    retryLoop = setInterval(() => {
-      const randAmount = selected[Math.floor(Math.random() * selected.length)];
-      const payload = {
-        type: "SEND_BET_COMMAND",
-        side,
-        amount: randAmount,
-        mode: isReal ? "real" : "test"
-      };
-      console.log("🔁 Sending:", payload);
-      openedTabs.forEach(tab => {
-        tab.postMessage(payload, "*");
+  <script>
+    const openedTabs = [];
+    const checkboxContainer = document.getElementById("amountCheckboxes");
+    const modeSwitch = document.getElementById("modeSwitch");
+    const modeLabel = document.getElementById("modeLabel");
+    const maxSpamInput = document.getElementById("maxSpamInput");
+  
+    const khrAmounts = [
+      { value: 5000, label: '៥ពាន់' },
+      { value: 10000, label: '១មឺន' },
+      { value: 15000, label: '១មឺន5ពាន់' },
+      { value: 20000, label: '២មឺន' },
+      { value: 25000, label: '2មឺន5ពាន់' },
+      { value: 50000, label: '៥មុឺន' },
+      { value: 55000, label: '5មឺន5ពាន់' },
+      { value: 100000, label: '១០មុឺន' },
+      { value: 105000, label: '10មុឺន5ពាន់' },
+      { value: 500000, label: '៥០មុឺន' },
+      { value: 1000000, label: '១លាន' }
+    ];
+  
+    const usdAmounts = [
+      { value: 1, label: '$1' },
+      { value: 2, label: '$2' },
+      { value: 5, label: '$5' },
+      { value: 10, label: '$10' },
+      { value: 15, label: '$15' },
+      { value: 20, label: '$20' },
+      { value: 50, label: '$50' },
+      { value: 100, label: '$100' }
+    ];
+  
+    let retryLoop = null;
+  
+    function initUI(isKHR = true) {
+      checkboxContainer.innerHTML = "";
+      const list = isKHR ? khrAmounts : usdAmounts;
+      list.forEach(({ value, label }, i) => {
+        const cb = document.createElement("input");
+        cb.type = "checkbox";
+        cb.id = `chk_${i}`;
+        cb.value = value;
+  
+        const lbl = document.createElement("label");
+        lbl.appendChild(cb);
+        lbl.append(label);
+        checkboxContainer.appendChild(lbl);
       });
-
-      count++;
-      if (count >= limit) {
-        clearInterval(retryLoop);
-        retryLoop = null;
-      }
-    }, isReal ? 500 : 100);
-  }
-
-  document.getElementById("spamMeron").onclick = () => spam("MERON");
-  document.getElementById("spamWala").onclick = () => spam("WALA");
-  document.getElementById("stopBtnBottom").onclick = () => {
-    if (retryLoop) clearInterval(retryLoop);
-    retryLoop = null;
-  };
-  modeSwitch.onchange = updateModeUI;
-
-  window.addEventListener("DOMContentLoaded", () => {
-    initUI(true); // KHR = true
-    if (!localStorage.getItem("openedPanel")) {
-      localStorage.setItem("openedPanel", "true");
-      window.open("https://bc24.tv", "_blank");
-      window.open("https://sb24.mx", "_blank");
-      window.open("https://hh888.ai", "_blank");
-      window.open("https://bc24.me", "_blank");
+      updateModeUI();
     }
-
-    // ✅ Add mutation observer
-    const el = document.querySelector(".cg_pending_match");
-    if (el) {
-      const observer = new MutationObserver(() => {
-        const text = el.innerText.trim().toLowerCase();
-        if (text.includes("បិទ") || text.includes("closed")) {
-          console.log("🔁 Auto Reset: Status Closed Detected");
-          // Reset logic
+  
+    function updateModeUI() {
+      const isReal = modeSwitch.checked;
+      modeLabel.textContent = isReal ? "Real" : "Test";
+      maxSpamInput.value = isReal ? 200 : 3;
+  
+      const indexes = isReal ? [1, 2, 3, 4, 5, 6, 7, 8] : [0];
+      [...checkboxContainer.querySelectorAll("input[type=checkbox]")].forEach(cb => cb.checked = false);
+      indexes.forEach(i => {
+        const cb = document.getElementById(`chk_${i}`);
+        if (cb) cb.checked = true;
+      });
+    }
+  
+    function spam(side) {
+      if (retryLoop) clearInterval(retryLoop);
+  
+      const selected = [...checkboxContainer.querySelectorAll("input[type=checkbox]:checked")]
+        .map(cb => parseInt(cb.value)).filter(v => !isNaN(v));
+      if (selected.length === 0) {
+        alert("Please select amounts");
+        return;
+      }
+  
+      const limit = parseInt(maxSpamInput.value || "3");
+      const isReal = modeSwitch.checked;
+      let count = 0;
+  
+      retryLoop = setInterval(() => {
+        const randAmount = selected[Math.floor(Math.random() * selected.length)];
+        const payload = {
+          type: "SEND_BET_COMMAND",
+          side,
+          amount: randAmount,
+          mode: isReal ? "real" : "test"
+        };
+        console.log("🔁 Sending:", payload);
+        openedTabs.forEach(tab => {
+          tab.postMessage(payload, "*");
+        });
+  
+        count++;
+        if (count >= limit) {
           clearInterval(retryLoop);
           retryLoop = null;
-          modeSwitch.checked = false; // force to test
-          updateModeUI();
         }
-      });
-
-      observer.observe(el, {
-        childList: true,
-        characterData: true,
-        subtree: true,
-      });
+      }, isReal ? 500 : 100);
     }
-  });
-</script>
-
+  
+    document.getElementById("spamMeron").onclick = () => spam("MERON");
+    document.getElementById("spamWala").onclick = () => spam("WALA");
+    document.getElementById("stopBtnBottom").onclick = () => {
+      if (retryLoop) clearInterval(retryLoop);
+      retryLoop = null;
+    };
+    modeSwitch.onchange = updateModeUI;
+  
+    window.addEventListener("DOMContentLoaded", () => {
+      initUI(true); // KHR = true
+      if (!localStorage.getItem("openedPanel")) {
+        localStorage.setItem("openedPanel", "true");
+        window.open("https://bc24.tv", "_blank");
+        window.open("https://sb24.mx", "_blank");
+        window.open("https://hh888.ai", "_blank");
+        window.open("https://bc24.me", "_blank");
+      }
+  
+      // ✅ Add mutation observer
+      const el = document.querySelector(".cg_pending_match");
+      if (el) {
+        const observer = new MutationObserver(() => {
+          const text = el.innerText.trim().toLowerCase();
+          if (text.includes("បិទ") || text.includes("closed")) {
+            console.log("🔁 Auto Reset: Status Closed Detected");
+            // Reset logic
+            clearInterval(retryLoop);
+            retryLoop = null;
+            modeSwitch.checked = false; // force to test
+            updateModeUI();
+          }
+        });
+  
+        observer.observe(el, {
+          childList: true,
+          characterData: true,
+          subtree: true,
+        });
+      }
+    });
+  </script>
+  
+  
 </body>
 </html>
