@@ -88,7 +88,7 @@
     const modeSwitch = document.getElementById("modeSwitch");
     const modeLabel = document.getElementById("modeLabel");
     const maxSpamInput = document.getElementById("maxSpamInput");
-
+  
     const khrAmounts = [
       { value: 5000, label: '៥ពាន់' },
       { value: 10000, label: '១មឺន' },
@@ -102,7 +102,7 @@
       { value: 500000, label: '៥០មុឺន' },
       { value: 1000000, label: '១លាន' }
     ];
-
+  
     const usdAmounts = [
       { value: 1, label: '$1' },
       { value: 2, label: '$2' },
@@ -113,10 +113,10 @@
       { value: 50, label: '$50' },
       { value: 100, label: '$100' }
     ];
-
+  
     let retryLoop = null;
     let openedTabs = [];
-
+  
     function initUI(isKHR = true) {
       checkboxContainer.innerHTML = "";
       const list = isKHR ? khrAmounts : usdAmounts;
@@ -125,7 +125,7 @@
         cb.type = "checkbox";
         cb.id = `chk_${i}`;
         cb.value = value;
-
+  
         const lbl = document.createElement("label");
         lbl.appendChild(cb);
         lbl.append(label);
@@ -133,12 +133,11 @@
       });
       updateModeUI();
     }
-
+  
     function updateModeUI() {
       const isReal = modeSwitch.checked;
       modeLabel.textContent = isReal ? "Real" : "Test";
       maxSpamInput.value = isReal ? 200 : 3;
-
       const indexes = isReal ? [1, 2, 3, 4, 5, 6, 7, 8] : [0];
       [...checkboxContainer.querySelectorAll("input[type=checkbox]")].forEach(cb => cb.checked = false);
       indexes.forEach(i => {
@@ -146,22 +145,22 @@
         if (cb) cb.checked = true;
       });
     }
-
+  
     function spam(side) {
       if (retryLoop) clearInterval(retryLoop);
-
+  
       const selected = [...checkboxContainer.querySelectorAll("input[type=checkbox]:checked")]
         .map(cb => parseInt(cb.value)).filter(v => !isNaN(v));
       if (selected.length === 0) {
         alert("Please select amounts");
         return;
       }
-
+  
       const limit = parseInt(maxSpamInput.value || "3");
       const isReal = modeSwitch.checked;
       let count = 0;
-
-      retryLoop = setInterval(() => {
+  
+      retryLoop = window._spamLoop = setInterval(() => {
         const randAmount = selected[Math.floor(Math.random() * selected.length)];
         const payload = {
           type: "SEND_BET_COMMAND",
@@ -170,41 +169,74 @@
           mode: isReal ? "real" : "test"
         };
         console.log("🔁 Sending:", payload);
-
-        openedTabs.forEach(tab => {
-          tab.postMessage(payload, "*");
-        });
-
+        openedTabs.forEach(tab => tab.postMessage(payload, "*"));
         count++;
         if (count >= limit) {
           clearInterval(retryLoop);
-          retryLoop = null;
+          retryLoop = window._spamLoop = null;
         }
       }, isReal ? 500 : 100);
     }
-
+  
     document.getElementById("spamMeron").onclick = () => spam("MERON");
     document.getElementById("spamWala").onclick = () => spam("WALA");
     document.getElementById("stopBtnBottom").onclick = () => {
       if (retryLoop) clearInterval(retryLoop);
-      retryLoop = null;
+      retryLoop = window._spamLoop = null;
     };
     modeSwitch.onchange = updateModeUI;
-
-   
-  localStorage.setItem("openedPanel", "true");
-       window.onload = function () {
-      initUI(true); // KHR default
-      // Open betting tabs
+  
+    // ✅ Auto spam stop when fight closes
+    const isClosedStatus = (text) => {
+      const lower = text.toLowerCase();
+      return lower.includes("closed") || lower.includes("បិទ");
+    };
+  
+    const stopSpam = () => {
+      localStorage.setItem("AUTO_SPAM_STOP", Date.now().toString());
+      console.log("🛑 Auto spam cleared due to fight close");
+    };
+  
+    const observeStatus = () => {
+      const target = document.querySelector('.cg_pending_match');
+      if (!target) return console.warn("❌ No status element found");
+  
+      const observer = new MutationObserver(() => {
+        const statusText = target.textContent.trim();
+        if (isClosedStatus(statusText)) {
+          stopSpam();
+          setTimeout(() => {
+            location.reload(); // prepare next round
+          }, 1000);
+        }
+      });
+  
+      observer.observe(target, { childList: true, subtree: true, characterData: true });
+      console.log("👁️ Watching fight status...");
+    };
+  
+    setInterval(() => {
+      const stopSignal = localStorage.getItem("AUTO_SPAM_STOP");
+      if (stopSignal && parseInt(stopSignal) > Date.now() - 10000) {
+        if (window._spamLoop) {
+          clearInterval(window._spamLoop);
+          window._spamLoop = null;
+          console.log("🛑 Spam auto-stopped by signal.");
+        }
+      }
+    }, 2000);
+  
+    // ✅ Initial open
+    localStorage.setItem("openedPanel", "true");
+    window.onload = function () {
+      initUI(true);
+      observeStatus();
       openedTabs.push(window.open("https://bc24.tv", "_blank"));
       openedTabs.push(window.open("https://sb24.mx", "_blank"));
       openedTabs.push(window.open("https://hh888.ai", "_blank"));
-      openedTabs.push(window.open("https://bc24.me/", "_blank"));
-     
+      openedTabs.push(window.open("https://bc24.me", "_blank"));
     };
-
-
-   
   </script>
+  
 </body>
 </html>
