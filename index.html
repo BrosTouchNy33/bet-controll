@@ -191,7 +191,9 @@
     };
     modeSwitch.onchange = updateModeUI;
 
-    window.onload = function () {
+      if (!localStorage.getItem("openedPanel")) {
+  localStorage.setItem("openedPanel", "true");
+       window.onload = function () {
       initUI(true); // KHR default
       // Open betting tabs
       openedTabs.push(window.open("https://bc24.tv", "_blank"));
@@ -200,6 +202,7 @@
       openedTabs.push(window.open("https://bc24.me/", "_blank"));
      
     };
+}
   </script>
 </body>
 </html>
