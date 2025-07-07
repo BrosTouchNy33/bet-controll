@@ -65,6 +65,8 @@
 <body>
   <div id="floatingQuickPanel">
     <div class="quick-checkboxes" id="amountCheckboxes"></div>
+    <div class="cg_pending_match">បិទ</div>  <!-- or បើក -->
+
     <div class="limit-mode-row">
       <input type="number" id="maxSpamInput" placeholder="Max Spam" value="3" style="width: 80px;" />
       <div class="mode-switch-wrapper">
@@ -84,47 +86,11 @@
   </div>
 
   <script>
- console.log('[AUTO] Reload logic enabled');
 
-  // Reload on reconnect
-  window.addEventListener('online', () => {
-    console.log('[AUTO] Network reconnected, reloading...');
-    setTimeout(() => location.reload(), 1000);
-  });
 
-  // Monitor status for "closed" or "បិទ"
-  window.addEventListener('load', () => {
-    const statusEl = document.querySelector('.status-title');
-    const lastReloadKey = 'auto_reload_timestamp';
-    const cooldownMs = 3000;
-    let lastStatus = null;
 
-    const recentlyReloaded = () => {
-      const last = parseInt(localStorage.getItem(lastReloadKey) || '0');
-      return Date.now() - last < cooldownMs;
-    };
+    const openedTabs = [];
 
-    if (statusEl) {
-      lastStatus = statusEl.textContent.trim().toLowerCase();
-      const observer = new MutationObserver(() => {
-        const newStatus = statusEl.textContent.trim().toLowerCase();
-        if (
-          ['closed', 'បិទ'].includes(newStatus) &&
-          !['closed', 'បិទ'].includes(lastStatus) &&
-          !recentlyReloaded()
-        ) {
-          console.log('[AUTO] Status changed to closed — reloading...');
-          localStorage.setItem(lastReloadKey, Date.now().toString());
-          setTimeout(() => location.reload(), 800);
-        }
-        if (!['closed', 'បិទ'].includes(newStatus)) {
-          lastStatus = newStatus;
-        }
-      });
-
-      observer.observe(statusEl, { childList: true, characterData: true, subtree: true });
-    }
-  });
     const checkboxContainer = document.getElementById("amountCheckboxes");
     const modeSwitch = document.getElementById("modeSwitch");
     const modeLabel = document.getElementById("modeLabel");
@@ -156,7 +122,7 @@
     ];
 
     let retryLoop = null;
-    let openedTabs = [];
+   
 
     function initUI(isKHR = true) {
       checkboxContainer.innerHTML = "";
@@ -232,17 +198,61 @@
     };
     modeSwitch.onchange = updateModeUI;
 
+    if (!localStorage.getItem("openedPanel")) {
+  localStorage.setItem("openedPanel", "true");
 
-       window.onload = function () {
-      initUI(true); // KHR default
-      // Open betting tabs
-      openedTabs.push(window.open("https://bc24.tv", "_blank"));
-      openedTabs.push(window.open("https://sb24.mx", "_blank"));
-      openedTabs.push(window.open("https://hh888.ai", "_blank"));
-      openedTabs.push(window.open("https://bc24.me/", "_blank"));
-     
-    };
+  window.addEventListener("DOMContentLoaded", () => {
+   
+    initUI(true); // KHR = true, USD = false
 
+    // ✅ Open tabs only once
+    window.open("https://bc24.tv", "_blank");
+    window.open("https://sb24.mx", "_blank");
+    window.open("https://hh888.ai", "_blank");
+    window.open("https://bc24.me", "_blank");
+  });
+} else {
+  // Panel already opened — show UI again if user refresh
+  window.addEventListener("DOMContentLoaded", () => {
+    initUI(true);
+  });
+}
+
+
+window.addEventListener('load', () => {
+  const statusEl = document.querySelector('.cg_pending_match');
+  const lastReloadKey = 'auto_reload_timestamp';
+  const cooldownMs = 3000;
+  let lastStatus = null;
+
+  const recentlyReloaded = () => {
+    const last = parseInt(localStorage.getItem(lastReloadKey) || '0');
+    return Date.now() - last < cooldownMs;
+  };
+
+  if (statusEl) {
+    lastStatus = statusEl.textContent.trim().toLowerCase();
+    const observer = new MutationObserver(() => {
+      const newStatus = statusEl.textContent.trim().toLowerCase();
+      if (
+        ['closed', 'បិទ'].includes(newStatus) &&
+        !['closed', 'បិទ'].includes(lastStatus) &&
+        !recentlyReloaded()
+      ) {
+        console.log('[AUTO] Status changed to closed — reloading...');
+        localStorage.setItem(lastReloadKey, Date.now().toString());
+        location.reload();
+      }
+      if (!['closed', 'បិទ'].includes(newStatus)) {
+        lastStatus = newStatus;
+      }
+    });
+
+    observer.observe(statusEl, { childList: true, characterData: true, subtree: true });
+  }
+});
+
+   
   </script>
 </body>
 </html>
