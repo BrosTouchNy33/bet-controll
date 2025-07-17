@@ -183,7 +183,7 @@
         clearInterval(retryLoop);
         retryLoop = window._spamLoop = null;
       }
-    }, isReal ? 300 : 100);
+    }, 0);
   }
 
   document.getElementById("spamMeron").onclick = () => spam("MERON");
