@@ -149,42 +149,56 @@
   }
 
   function spam(side) {
-    if (retryLoop) clearInterval(retryLoop);
+  if (retryLoop) clearInterval(retryLoop);
 
-    const rawStatus = (localStorage.getItem("AUTO_FIGHT_STATUS") || "").toLowerCase();
-    if (rawStatus.includes("closed") || rawStatus.includes("បិទ")) {
-      alert("⚠️ Fight is CLOSED. You cannot spam now.");
-      return;
-    }
-
-    const selected = [...checkboxContainer.querySelectorAll("input[type=checkbox]:checked")]
-      .map(cb => parseInt(cb.value)).filter(v => !isNaN(v));
-    if (selected.length === 0) {
-      alert("Please select amounts");
-      return;
-    }
-
-    const limit = parseInt(maxSpamInput.value || "3");
-    const isReal = modeSwitch.checked;
-    let count = 0;
-
-    retryLoop = window._spamLoop = setInterval(() => {
-      const randAmount = selected[Math.floor(Math.random() * selected.length)];
-      const payload = {
-        type: "SEND_BET_COMMAND",
-        side,
-        amount: randAmount,
-        mode: isReal ? "real" : "test"
-      };
-      console.log("🔁 Sending:", payload);
-      openedTabs.forEach(tab => tab.postMessage(payload, "*"));
-      count++;
-      if (count >= limit) {
-        clearInterval(retryLoop);
-        retryLoop = window._spamLoop = null;
-      }
-    }, 0);
+  const rawStatus = (localStorage.getItem("AUTO_FIGHT_STATUS") || "").toLowerCase();
+  if (rawStatus.includes("closed") || rawStatus.includes("បិទ")) {
+    alert("⚠️ Fight is CLOSED. You cannot spam now.");
+    return;
   }
+
+  const selected = [...checkboxContainer.querySelectorAll("input[type=checkbox]:checked")]
+    .map(cb => parseInt(cb.value)).filter(v => !isNaN(v));
+  if (selected.length === 0) {
+    alert("Please select amounts");
+    return;
+  }
+
+  const limit = parseInt(maxSpamInput.value || "3");
+  const isReal = modeSwitch.checked;
+  let count = 0;
+
+  retryLoop = window._spamLoop = setInterval(() => {
+    const currentStatus = (localStorage.getItem("AUTO_FIGHT_STATUS") || "").toLowerCase();
+    if (currentStatus.includes("closed") || currentStatus.includes("បិទ")) {
+      console.warn("🛑 Stopped: fight closed");
+      clearInterval(retryLoop);
+      retryLoop = window._spamLoop = null;
+      return;
+    }
+
+    const randAmount = selected[Math.floor(Math.random() * selected.length)];
+    const payload = {
+      type: "SEND_BET_COMMAND",
+      side,
+      amount: randAmount,
+      mode: isReal ? "real" : "test"
+    };
+    console.log(`🔁 [${count + 1}/${limit}]`, payload);
+    openedTabs.forEach(tab => tab.postMessage(payload, "*"));
+    count++;
+
+    // update UI label (optional)
+    statusLabel.textContent = `Status: ${rawStatus.toUpperCase()} | Sent: ${count}/${limit}`;
+
+    if (count >= limit) {
+      clearInterval(retryLoop);
+      retryLoop = window._spamLoop = null;
+      console.log("✅ Spam completed.");
+    }
+  }, isReal ? 75 : 0); // real = safer fast, test = instant
+}
+
 
   document.getElementById("spamMeron").onclick = () => spam("MERON");
   document.getElementById("spamWala").onclick = () => spam("WALA");
