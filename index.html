@@ -209,35 +209,47 @@
   modeSwitch.onchange = updateModeUI;
 
   setInterval(() => {
-    const rawStatus = (localStorage.getItem("AUTO_FIGHT_STATUS") || "UNKNOWN").trim();
-    const lower = rawStatus.toLowerCase();
-    let color = "#ffd700";
+  const rawStatus = (localStorage.getItem("AUTO_FIGHT_STATUS") || "UNKNOWN").trim();
+  const lower = rawStatus.toLowerCase();
+  let color = "#ffd700";
 
-    if (lower.includes("open") || lower.includes("បើក")) {
-      color = "#00ff00";
-    } else if (lower.includes("closed") || lower.includes("បិទ")) {
-      color = "#ff3b3b";
+  if (lower.includes("open") || lower.includes("បើក")) {
+    color = "#00ff00";
+
+    // Reset previousStatus so next "closed" can trigger mode switch again
+    if (previousStatus !== "open") {
+      previousStatus = "open";
     }
 
-    statusLabel.textContent = `Status: ${rawStatus.toUpperCase()}`;
-    statusLabel.style.color = color;
+  } else if (lower.includes("closed") || lower.includes("បិទ")) {
+    color = "#ff3b3b";
 
-    if ((lower.includes("closed") || lower.includes("បិទ")) && previousStatus !== "closed") {
+    if (previousStatus !== "closed") {
+      console.warn("🟥 Fight is CLOSED → Auto-switching to TEST mode");
+
       previousStatus = "closed";
       localStorage.setItem("AUTO_SPAM_STOP", Date.now().toString());
+
+      // Stop spam loop
       if (window._spamLoop) clearInterval(window._spamLoop);
       window._spamLoop = null;
+
+      // Switch to TEST mode if currently in Real
       if (modeSwitch.checked) {
         modeSwitch.checked = false;
         updateModeUI();
       }
+
+      // Close all opened tabs
       openedTabs.forEach(tab => tab.close());
       openedTabs = [];
     }
+  }
 
-    
-   
-  }, 1000);
+  statusLabel.textContent = `Status: ${rawStatus.toUpperCase()}`;
+  statusLabel.style.color = color;
+}, 1000);
+
 
   window.onload = function () {
     initUI();
