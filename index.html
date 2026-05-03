@@ -206,276 +206,111 @@
 </div>
 
 <script>
-  const TARGET_CHANNEL = "PH";
+(function () {
+  let lastChannel = null;
 
-  const urls = [
-    "https://aamm24.win/#",
-    "https://sa24.app/#"
-  ];
+  function getCurrentChannel() {
+    const active = document.querySelector(".btn-channel.active");
+    if (!active) return null;
 
-  const checkboxContainer = document.getElementById("amountCheckboxes");
-  const modeSwitch = document.getElementById("modeSwitch");
-  const modeLabel = document.getElementById("modeLabel");
-  const maxSpamInput = document.getElementById("maxSpamInput");
-  const statusLabel = document.getElementById("fightStatusLabel");
-  const channelStatusLabel = document.getElementById("channelStatusLabel");
-
-  const khrAmounts = [
-    { value: 5000, label: "៥ពាន់" },
-    { value: 10000, label: "១មឺន" },
-    { value: 15000, label: "១មឺន5ពាន់" },
-    { value: 20000, label: "២មឺន" },
-    { value: 50000, label: "៥មុឺន" },
-    { value: 100000, label: "១០មុឺន" },
-    { value: 200000, label: "២០មុឺន" }
-  ];
-
-  let retryLoop = null;
-  let openedTabs = [];
-  let previousStatus = "UNKNOWN";
-
-  function initUI() {
-    checkboxContainer.innerHTML = "";
-
-    khrAmounts.forEach(({ value, label }, i) => {
-      const cb = document.createElement("input");
-      cb.type = "checkbox";
-      cb.id = `chk_${i}`;
-      cb.value = value;
-
-      const lbl = document.createElement("label");
-      lbl.appendChild(cb);
-      lbl.append(label);
-
-      checkboxContainer.appendChild(lbl);
-    });
-
-    updateModeUI();
+    return (
+      active.getAttribute("data-name") ||
+      active.dataset.name ||
+      active.innerText.trim()
+    );
   }
 
-  function updateModeUI() {
-    const isReal = modeSwitch.checked;
+  function sendChannelInfo(type = "CHANNEL_INFO") {
+    const channel = getCurrentChannel();
+    if (!channel) return;
 
-    modeLabel.textContent = isReal ? "Real" : "Test";
-    maxSpamInput.value = isReal ? 200 : 3;
+    if (channel !== lastChannel || type === "CHANNEL_SELECTED") {
+      lastChannel = channel;
 
-    const indexes = isReal ? [1, 2, 3, 4, 5, 6] : [0];
+      console.log("✅ Current channel:", channel);
 
-    [...checkboxContainer.querySelectorAll("input[type=checkbox]")]
-      .forEach(cb => cb.checked = false);
-
-    indexes.forEach(i => {
-      const cb = document.getElementById(`chk_${i}`);
-      if (cb) cb.checked = true;
-    });
+      if (window.opener) {
+        window.opener.postMessage({
+          type: type,
+          channel: channel
+        }, "*");
+      }
+    }
   }
 
-  function getTargetTabs() {
-    return openedTabs.filter(item => {
-      return item.channel &&
-             item.channel.toUpperCase() === TARGET_CHANNEL;
-    });
-  }
+  // Detect when user clicks channel
+  document.addEventListener("click", function (e) {
+    const btn = e.target.closest(".btn-channel");
+    if (!btn) return;
 
-  function updateChannelLabel() {
-    const phTabs = getTargetTabs();
+    const channel = btn.getAttribute("data-name") || btn.dataset.name;
 
-    channelStatusLabel.textContent = `${TARGET_CHANNEL} Tabs: ${phTabs.length}`;
+    if (channel) {
+      lastChannel = channel;
 
-    channelStatusLabel.style.color = phTabs.length > 0
-      ? "#00ff00"
-      : "#ffcc00";
-  }
+      console.log("✅ Clicked channel:", channel);
 
-  function stopSpam() {
-    if (retryLoop) clearInterval(retryLoop);
-
-    retryLoop = null;
-    window._spamLoop = null;
-  }
-
-  function spam(side) {
-    stopSpam();
-
-    const rawStatus = (localStorage.getItem("AUTO_FIGHT_STATUS") || "").toLowerCase();
-
-    if (rawStatus.includes("closed") || rawStatus.includes("បិទ")) {
-      alert("⚠️ Fight is CLOSED. You cannot spam now.");
-      return;
+      if (window.opener) {
+        window.opener.postMessage({
+          type: "CHANNEL_SELECTED",
+          channel: channel
+        }, "*");
+      }
     }
 
-    const targetTabs = getTargetTabs();
+    setTimeout(() => {
+      sendChannelInfo("CHANNEL_INFO");
+    }, 500);
+  });
 
-    if (targetTabs.length === 0) {
-      alert("No PH channel tab detected yet. Click/select PH inside the site first.");
-      return;
+  // Auto check active channel every second
+  setInterval(() => {
+    sendChannelInfo("CHANNEL_INFO");
+  }, 1000);
+
+  // Listen from controller
+  window.addEventListener("message", function (event) {
+    const data = event.data;
+    if (!data || typeof data !== "object") return;
+
+    if (data.type === "INIT_WATCHER") {
+      console.log("✅ Watcher initialized");
+      sendChannelInfo("CHANNEL_INFO");
     }
 
-    const selected = [...checkboxContainer.querySelectorAll("input[type=checkbox]:checked")]
-      .map(cb => parseInt(cb.value))
-      .filter(v => !isNaN(v));
+    if (data.type === "SEND_BET_COMMAND") {
+      const currentChannel = getCurrentChannel();
 
-    if (selected.length === 0) {
-      alert("Please select amounts");
-      return;
-    }
-
-    const limit = parseInt(maxSpamInput.value || "3");
-    const isReal = modeSwitch.checked;
-    let count = 0;
-
-    retryLoop = window._spamLoop = setInterval(() => {
-      const currentStatus = (localStorage.getItem("AUTO_FIGHT_STATUS") || "").toLowerCase();
-
-      if (currentStatus.includes("closed") || currentStatus.includes("បិទ")) {
-        console.warn("🛑 Stopped: fight closed");
-        stopSpam();
+      if (!currentChannel) {
+        console.warn("No active channel found");
         return;
       }
 
-      const randAmount = selected[Math.floor(Math.random() * selected.length)];
-
-      const payload = {
-        type: "SEND_BET_COMMAND",
-        channel: TARGET_CHANNEL,
-        side: side,
-        amount: randAmount,
-        mode: isReal ? "real" : "test"
-      };
-
-      console.log(`🔁 PH [${count + 1}/${limit}]`, payload);
-
-      targetTabs.forEach(({ tab }) => {
-        try {
-          tab.postMessage(payload, "*");
-        } catch (e) {
-          console.warn("Cannot send to PH tab:", e);
-        }
-      });
-
-      count++;
-
-      statusLabel.textContent = `Status: ${currentStatus.toUpperCase()} | PH Sent: ${count}/${limit}`;
-
-      if (count >= limit) {
-        stopSpam();
-        console.log("✅ PH spam completed.");
+      if (
+        data.channel &&
+        data.channel.toUpperCase() !== currentChannel.toUpperCase()
+      ) {
+        console.warn("Skip command. Current:", currentChannel, "Target:", data.channel);
+        return;
       }
 
-    }, isReal ? 75 : 0);
-  }
+      console.log("🎯 Bet command received:", data);
 
-  document.getElementById("spamMeron").onclick = () => spam("MERON");
-  document.getElementById("spamWala").onclick = () => spam("WALA");
+      /*
+        PUT YOUR REAL BET CLICK CODE HERE
 
-  document.getElementById("stopBtnBottom").onclick = () => {
-    stopSpam();
-    console.log("🛑 Manual stop");
-  };
-
-  modeSwitch.onchange = updateModeUI;
-
-  document.getElementById("startBtn").onclick = () => {
-    openedTabs = [];
-
-    urls.forEach((url, index) => {
-      const tab = window.open(url, "_blank");
-
-      if (tab) {
-        openedTabs.push({
-          id: index,
-          tab: tab,
-          url: url,
-          channel: null,
-          status: "UNKNOWN"
-        });
-
-        setTimeout(() => {
-          try {
-            tab.postMessage({
-              type: "INIT_WATCHER",
-              targetChannel: TARGET_CHANNEL
-            }, "*");
-          } catch (e) {
-            console.warn("Cannot send INIT_WATCHER:", e);
-          }
-        }, 2000);
-
-      } else {
-        alert("Popup blocked! Please allow popups for this site.");
-      }
-    });
-
-    updateChannelLabel();
-  };
-
-  setInterval(() => {
-    const rawStatus = (localStorage.getItem("AUTO_FIGHT_STATUS") || "UNKNOWN").trim();
-    const lower = rawStatus.toLowerCase();
-
-    let color = "#ffd700";
-
-    if (lower.includes("open") || lower.includes("បើក")) {
-      color = "#00ff00";
-
-      if (previousStatus !== "open") {
-        previousStatus = "open";
-      }
-
-    } else if (lower.includes("closed") || lower.includes("បិទ")) {
-      color = "#ff3b3b";
-
-      if (previousStatus !== "closed") {
-        console.warn("🟥 Fight CLOSED → stopping PH automation");
-
-        previousStatus = "closed";
-        localStorage.setItem("AUTO_SPAM_STOP", Date.now().toString());
-
-        stopSpam();
-
-        if (modeSwitch.checked) {
-          modeSwitch.checked = false;
-          updateModeUI();
-        }
-      }
-    }
-
-    statusLabel.textContent = `Status: ${rawStatus.toUpperCase()}`;
-    statusLabel.style.color = color;
-
-    updateChannelLabel();
-  }, 1000);
-
-  window.addEventListener("message", (event) => {
-    const data = event.data;
-
-    if (!data || typeof data !== "object") return;
-
-    if (data.type === "CHANNEL_SELECTED" || data.type === "CHANNEL_INFO") {
-      const channel = String(data.channel || "").trim().toUpperCase();
-
-      const found = openedTabs.find(item => item.tab === event.source);
-
-      if (found) {
-        found.channel = channel;
-        console.log("✅ Tab channel detected:", channel);
-      }
-
-      updateChannelLabel();
-    }
-
-    if (data.type === "STATUS_UPDATE" && data.status) {
-      localStorage.setItem("AUTO_FIGHT_STATUS", data.status);
-
-      const found = openedTabs.find(item => item.tab === event.source);
-
-      if (found) {
-        found.status = data.status;
-      }
+        data.side   = MERON / WALA
+        data.amount = 5000 / 10000 / etc
+        data.mode   = test / real
+      */
     }
   });
 
-  window.onload = initUI;
+  // First run
+  setTimeout(() => {
+    sendChannelInfo("CHANNEL_INFO");
+  }, 1000);
+})();
 </script>
 
 </body>
