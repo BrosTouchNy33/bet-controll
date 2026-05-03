@@ -2,7 +2,8 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>All-in-One Bet Controller</title>
+  <title>PH Channel Bet Controller</title>
+
   <style>
     body {
       background: #121212;
@@ -12,7 +13,7 @@
       display: flex;
       justify-content: center;
     }
-  
+
     #floatingQuickPanel {
       background: #282f46;
       border-radius: 16px;
@@ -21,6 +22,7 @@
       font-family: 'Khmer OS Battambang', sans-serif;
       box-shadow: 0 8px 20px rgba(0,0,0,0.4);
     }
+
     .quick-checkboxes {
       display: flex;
       flex-wrap: wrap;
@@ -28,21 +30,24 @@
       justify-content: center;
       margin-bottom: 30px;
     }
+
     .quick-checkboxes label {
       display: flex;
       flex-direction: column;
       align-items: center;
       font-size: 14px;
       color: #ccc;
-      width: 50px;
+      width: 60px;
       margin: 2px;
     }
+
     .quick-checkboxes input[type="checkbox"] {
       margin-top: 4px;
       width: 32px;
       height: 32px;
       transform: scale(1.2);
     }
+
     .limit-mode-row {
       display: flex;
       justify-content: space-between;
@@ -50,71 +55,179 @@
       gap: 20px;
       margin-bottom: 10px;
     }
-    .btn { padding: 20px; border-radius: 8px; font-weight: bold; font-size: 16px; border: none; cursor: pointer; flex: 1; }
-    .btn-meron { background: #ff4d4f; color: white; }
-    .btn-wala  { background: #1890ff; color: white; }
-    .btn-stop  { background: #ffc107; color: black; width: 100%; }
-    .mode-switch-wrapper { display: flex; align-items: center; gap: 10px; }
-    .switch { position: relative; display: inline-block; width: 50px; height: 24px; }
-    .switch input { opacity: 0; width: 0; height: 0; }
-    .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #888; transition: 0.4s; border-radius: 24px; }
-    .slider:before { position: absolute; content: ""; height: 18px; width: 18px; left: 3px; bottom: 3px; background-color: white; transition: 0.4s; border-radius: 50%; }
-    .switch input:checked + .slider { background-color: #28a745; }
-    .switch input:checked + .slider:before { transform: translateX(26px); }
-    #fightStatusLabel {
+
+    .btn {
+      padding: 18px;
+      border-radius: 8px;
+      font-weight: bold;
+      font-size: 16px;
+      border: none;
+      cursor: pointer;
+      flex: 1;
+    }
+
+    .btn-start {
+      background: #4caf50;
+      color: white;
+      width: 100%;
+      margin-bottom: 16px;
+    }
+
+    .btn-meron {
+      background: #ff4d4f;
+      color: white;
+    }
+
+    .btn-wala {
+      background: #1890ff;
+      color: white;
+    }
+
+    .btn-stop {
+      background: #ffc107;
+      color: black;
+      width: 100%;
+      margin-top: 12px;
+    }
+
+    .mode-switch-wrapper {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .switch {
+      position: relative;
+      display: inline-block;
+      width: 50px;
+      height: 24px;
+    }
+
+    .switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+
+    .slider {
+      position: absolute;
+      cursor: pointer;
+      inset: 0;
+      background-color: #888;
+      transition: 0.4s;
+      border-radius: 24px;
+    }
+
+    .slider:before {
+      position: absolute;
+      content: "";
+      height: 18px;
+      width: 18px;
+      left: 3px;
+      bottom: 3px;
+      background-color: white;
+      transition: 0.4s;
+      border-radius: 50%;
+    }
+
+    .switch input:checked + .slider {
+      background-color: #28a745;
+    }
+
+    .switch input:checked + .slider:before {
+      transform: translateX(26px);
+    }
+
+    #fightStatusLabel,
+    #channelStatusLabel {
       margin-top: 12px;
       text-align: center;
       font-size: 16px;
       font-weight: bold;
     }
-    .btn-start {
-      background: #4caf50;
-      color: white;
+
+    .target-box {
+      background: rgba(255,255,255,.08);
+      border: 1px solid rgba(255,255,255,.15);
+      padding: 12px;
+      border-radius: 10px;
+      text-align: center;
       margin-bottom: 16px;
+      font-weight: bold;
+    }
+
+    .quick-actions {
+      display: flex;
+      gap: 10px;
+      margin-top: 10px;
     }
   </style>
 </head>
+
 <body>
 
-  <div id="floatingQuickPanel">
-    <button class="btn btn-start" id="startBtn">▶️ Start Automation</button>
+<div id="floatingQuickPanel">
+  <button class="btn btn-start" id="startBtn">▶️ Start PH Automation</button>
 
-    <div class="quick-checkboxes" id="amountCheckboxes"></div>
-    <div class="limit-mode-row">
-      <input type="number" id="maxSpamInput" placeholder="Max Spam" value="3" style="width: 80px;" />
-      <div class="mode-switch-wrapper">
-        <span class="label">Mode:</span>
-        <label class="switch">
-          <input type="checkbox" id="modeSwitch" />
-          <span class="slider"></span>
-        </label>
-        <span id="modeLabel">Test</span>
-      </div>
-    </div>
-    <div id="fightStatusLabel">Status: UNKNOWN</div>
-    <div class="quick-actions" style="display: flex; gap: 10px; margin-top: 10px;">
-      <button class="btn btn-meron" id="spamMeron">Spam Meron</button>
-      <button class="btn btn-wala" id="spamWala">Spam Wala</button>
-    </div>
-    <button class="btn btn-stop" id="stopBtnBottom">🛑 Stop</button>
+  <div class="target-box">
+    Target Channel: <span id="targetChannelText">PH</span>
   </div>
 
+  <div class="quick-checkboxes" id="amountCheckboxes"></div>
+
+  <div class="limit-mode-row">
+    <input
+      type="number"
+      id="maxSpamInput"
+      placeholder="Max Spam"
+      value="3"
+      style="width: 90px;"
+    />
+
+    <div class="mode-switch-wrapper">
+      <span class="label">Mode:</span>
+      <label class="switch">
+        <input type="checkbox" id="modeSwitch" />
+        <span class="slider"></span>
+      </label>
+      <span id="modeLabel">Test</span>
+    </div>
+  </div>
+
+  <div id="channelStatusLabel">PH Tabs: 0</div>
+  <div id="fightStatusLabel">Status: UNKNOWN</div>
+
+  <div class="quick-actions">
+    <button class="btn btn-meron" id="spamMeron">Spam Meron PH</button>
+    <button class="btn btn-wala" id="spamWala">Spam Wala PH</button>
+  </div>
+
+  <button class="btn btn-stop" id="stopBtnBottom">🛑 Stop</button>
+</div>
+
 <script>
+  const TARGET_CHANNEL = "PH";
+
+  const urls = [
+    "https://aamm24.win/#",
+    "https://sa24.app/#"
+  ];
+
   const checkboxContainer = document.getElementById("amountCheckboxes");
   const modeSwitch = document.getElementById("modeSwitch");
   const modeLabel = document.getElementById("modeLabel");
   const maxSpamInput = document.getElementById("maxSpamInput");
   const statusLabel = document.getElementById("fightStatusLabel");
+  const channelStatusLabel = document.getElementById("channelStatusLabel");
 
   const khrAmounts = [
-    { value: 5000, label: '៥ពាន់' },
-    { value: 10000, label: '១មឺន' },
-    { value: 15000, label: '១មឺន5ពាន់' },
-    { value: 20000, label: '២មឺន' },
-    { value: 50000, label: '៥មុឺន' },
-    { value: 100000, label: '១០មុឺន' },
-    { value: 200000, label: '២០មុឺន' },
-    
+    { value: 5000, label: "៥ពាន់" },
+    { value: 10000, label: "១មឺន" },
+    { value: 15000, label: "១មឺន5ពាន់" },
+    { value: 20000, label: "២មឺន" },
+    { value: 50000, label: "៥មុឺន" },
+    { value: 100000, label: "១០មុឺន" },
+    { value: 200000, label: "២០មុឺន" }
   ];
 
   let retryLoop = null;
@@ -123,6 +236,7 @@
 
   function initUI() {
     checkboxContainer.innerHTML = "";
+
     khrAmounts.forEach(({ value, label }, i) => {
       const cb = document.createElement("input");
       cb.type = "checkbox";
@@ -132,155 +246,237 @@
       const lbl = document.createElement("label");
       lbl.appendChild(cb);
       lbl.append(label);
+
       checkboxContainer.appendChild(lbl);
     });
+
     updateModeUI();
   }
 
   function updateModeUI() {
     const isReal = modeSwitch.checked;
+
     modeLabel.textContent = isReal ? "Real" : "Test";
     maxSpamInput.value = isReal ? 200 : 3;
-    const indexes = isReal ? [1, 2, 3, 4, 5, 6, 7, 8] : [0];
-    [...checkboxContainer.querySelectorAll("input[type=checkbox]")].forEach(cb => cb.checked = false);
+
+    const indexes = isReal ? [1, 2, 3, 4, 5, 6] : [0];
+
+    [...checkboxContainer.querySelectorAll("input[type=checkbox]")]
+      .forEach(cb => cb.checked = false);
+
     indexes.forEach(i => {
       const cb = document.getElementById(`chk_${i}`);
       if (cb) cb.checked = true;
     });
   }
 
+  function getTargetTabs() {
+    return openedTabs.filter(item => {
+      return item.channel &&
+             item.channel.toUpperCase() === TARGET_CHANNEL;
+    });
+  }
+
+  function updateChannelLabel() {
+    const phTabs = getTargetTabs();
+
+    channelStatusLabel.textContent = `${TARGET_CHANNEL} Tabs: ${phTabs.length}`;
+
+    channelStatusLabel.style.color = phTabs.length > 0
+      ? "#00ff00"
+      : "#ffcc00";
+  }
+
+  function stopSpam() {
+    if (retryLoop) clearInterval(retryLoop);
+
+    retryLoop = null;
+    window._spamLoop = null;
+  }
+
   function spam(side) {
-  if (retryLoop) clearInterval(retryLoop);
+    stopSpam();
 
-  const rawStatus = (localStorage.getItem("AUTO_FIGHT_STATUS") || "").toLowerCase();
-  if (rawStatus.includes("closed") || rawStatus.includes("បិទ")) {
-    alert("⚠️ Fight is CLOSED. You cannot spam now.");
-    return;
-  }
+    const rawStatus = (localStorage.getItem("AUTO_FIGHT_STATUS") || "").toLowerCase();
 
-  const selected = [...checkboxContainer.querySelectorAll("input[type=checkbox]:checked")]
-    .map(cb => parseInt(cb.value)).filter(v => !isNaN(v));
-  if (selected.length === 0) {
-    alert("Please select amounts");
-    return;
-  }
-
-  const limit = parseInt(maxSpamInput.value || "3");
-  const isReal = modeSwitch.checked;
-  let count = 0;
-
-  retryLoop = window._spamLoop = setInterval(() => {
-    const currentStatus = (localStorage.getItem("AUTO_FIGHT_STATUS") || "").toLowerCase();
-    if (currentStatus.includes("closed") || currentStatus.includes("បិទ")) {
-      console.warn("🛑 Stopped: fight closed");
-      clearInterval(retryLoop);
-      retryLoop = window._spamLoop = null;
+    if (rawStatus.includes("closed") || rawStatus.includes("បិទ")) {
+      alert("⚠️ Fight is CLOSED. You cannot spam now.");
       return;
     }
 
-    const randAmount = selected[Math.floor(Math.random() * selected.length)];
-    const payload = {
-      type: "SEND_BET_COMMAND",
-      side,
-      amount: randAmount,
-      mode: isReal ? "real" : "test"
-    };
-    console.log(`🔁 [${count + 1}/${limit}]`, payload);
-    openedTabs.forEach(tab => tab.postMessage(payload, "*"));
-    count++;
+    const targetTabs = getTargetTabs();
 
-    // update UI label (optional)
-    statusLabel.textContent = `Status: ${rawStatus.toUpperCase()} | Sent: ${count}/${limit}`;
-
-    if (count >= limit) {
-      clearInterval(retryLoop);
-      retryLoop = window._spamLoop = null;
-      console.log("✅ Spam completed.");
+    if (targetTabs.length === 0) {
+      alert("No PH channel tab detected yet. Click/select PH inside the site first.");
+      return;
     }
-  }, isReal ? 75 : 0); // real = safer fast, test = instant
-}
 
+    const selected = [...checkboxContainer.querySelectorAll("input[type=checkbox]:checked")]
+      .map(cb => parseInt(cb.value))
+      .filter(v => !isNaN(v));
+
+    if (selected.length === 0) {
+      alert("Please select amounts");
+      return;
+    }
+
+    const limit = parseInt(maxSpamInput.value || "3");
+    const isReal = modeSwitch.checked;
+    let count = 0;
+
+    retryLoop = window._spamLoop = setInterval(() => {
+      const currentStatus = (localStorage.getItem("AUTO_FIGHT_STATUS") || "").toLowerCase();
+
+      if (currentStatus.includes("closed") || currentStatus.includes("បិទ")) {
+        console.warn("🛑 Stopped: fight closed");
+        stopSpam();
+        return;
+      }
+
+      const randAmount = selected[Math.floor(Math.random() * selected.length)];
+
+      const payload = {
+        type: "SEND_BET_COMMAND",
+        channel: TARGET_CHANNEL,
+        side: side,
+        amount: randAmount,
+        mode: isReal ? "real" : "test"
+      };
+
+      console.log(`🔁 PH [${count + 1}/${limit}]`, payload);
+
+      targetTabs.forEach(({ tab }) => {
+        try {
+          tab.postMessage(payload, "*");
+        } catch (e) {
+          console.warn("Cannot send to PH tab:", e);
+        }
+      });
+
+      count++;
+
+      statusLabel.textContent = `Status: ${currentStatus.toUpperCase()} | PH Sent: ${count}/${limit}`;
+
+      if (count >= limit) {
+        stopSpam();
+        console.log("✅ PH spam completed.");
+      }
+
+    }, isReal ? 75 : 0);
+  }
 
   document.getElementById("spamMeron").onclick = () => spam("MERON");
   document.getElementById("spamWala").onclick = () => spam("WALA");
+
   document.getElementById("stopBtnBottom").onclick = () => {
-    if (retryLoop) clearInterval(retryLoop);
-    retryLoop = window._spamLoop = null;
+    stopSpam();
+    console.log("🛑 Manual stop");
   };
+
   modeSwitch.onchange = updateModeUI;
 
+  document.getElementById("startBtn").onclick = () => {
+    openedTabs = [];
+
+    urls.forEach((url, index) => {
+      const tab = window.open(url, "_blank");
+
+      if (tab) {
+        openedTabs.push({
+          id: index,
+          tab: tab,
+          url: url,
+          channel: null,
+          status: "UNKNOWN"
+        });
+
+        setTimeout(() => {
+          try {
+            tab.postMessage({
+              type: "INIT_WATCHER",
+              targetChannel: TARGET_CHANNEL
+            }, "*");
+          } catch (e) {
+            console.warn("Cannot send INIT_WATCHER:", e);
+          }
+        }, 2000);
+
+      } else {
+        alert("Popup blocked! Please allow popups for this site.");
+      }
+    });
+
+    updateChannelLabel();
+  };
+
   setInterval(() => {
-  const rawStatus = (localStorage.getItem("AUTO_FIGHT_STATUS") || "UNKNOWN").trim();
-  const lower = rawStatus.toLowerCase();
-  let color = "#ffd700";
+    const rawStatus = (localStorage.getItem("AUTO_FIGHT_STATUS") || "UNKNOWN").trim();
+    const lower = rawStatus.toLowerCase();
 
-  if (lower.includes("open") || lower.includes("បើក")) {
-    color = "#00ff00";
+    let color = "#ffd700";
 
-    // Reset previousStatus so next "closed" can trigger mode switch again
-    if (previousStatus !== "open") {
-      previousStatus = "open";
-    }
+    if (lower.includes("open") || lower.includes("បើក")) {
+      color = "#00ff00";
 
-  } else if (lower.includes("closed") || lower.includes("បិទ")) {
-    color = "#ff3b3b";
-
-    if (previousStatus !== "closed") {
-      console.warn("🟥 Fight is CLOSED → Auto-switching to TEST mode");
-
-      previousStatus = "closed";
-      localStorage.setItem("AUTO_SPAM_STOP", Date.now().toString());
-
-      // Stop spam loop
-      if (window._spamLoop) clearInterval(window._spamLoop);
-      window._spamLoop = null;
-
-      // Switch to TEST mode if currently in Real
-      if (modeSwitch.checked) {
-        modeSwitch.checked = false;
-        updateModeUI();
+      if (previousStatus !== "open") {
+        previousStatus = "open";
       }
 
-      // Close all opened tabs
-      openedTabs.forEach(tab => tab.close());
-      openedTabs = [];
-    }
-  }
+    } else if (lower.includes("closed") || lower.includes("បិទ")) {
+      color = "#ff3b3b";
 
-  statusLabel.textContent = `Status: ${rawStatus.toUpperCase()}`;
-  statusLabel.style.color = color;
-}, 1000);
+      if (previousStatus !== "closed") {
+        console.warn("🟥 Fight CLOSED → stopping PH automation");
 
+        previousStatus = "closed";
+        localStorage.setItem("AUTO_SPAM_STOP", Date.now().toString());
 
-  window.onload = function () {
-    initUI();
-    document.getElementById("startBtn").onclick = () => {
-      const urls = ["https://aaaa24.me" , "https://aamm24.win"  ,"https://sa24.app/"];
-      urls.forEach((url) => {
-        const tab = window.open(url, "_blank");
-        if (tab) {
-          openedTabs.push(tab);
-          setTimeout(() => {
-            try {
-              tab.postMessage({ type: "INIT_WATCHER" }, "*");
-            } catch (e) {
-              console.warn("Can't send INIT_WATCHER:", e);
-            }
-          }, 2000);
-        } else {
-          alert("Popup blocked! Please allow popups for this site.");
+        stopSpam();
+
+        if (modeSwitch.checked) {
+          modeSwitch.checked = false;
+          updateModeUI();
         }
-      });
-    };
-  };
+      }
+    }
+
+    statusLabel.textContent = `Status: ${rawStatus.toUpperCase()}`;
+    statusLabel.style.color = color;
+
+    updateChannelLabel();
+  }, 1000);
 
   window.addEventListener("message", (event) => {
     const data = event.data;
-    if (typeof data !== "object") return;
+
+    if (!data || typeof data !== "object") return;
+
+    if (data.type === "CHANNEL_SELECTED" || data.type === "CHANNEL_INFO") {
+      const channel = String(data.channel || "").trim().toUpperCase();
+
+      const found = openedTabs.find(item => item.tab === event.source);
+
+      if (found) {
+        found.channel = channel;
+        console.log("✅ Tab channel detected:", channel);
+      }
+
+      updateChannelLabel();
+    }
+
     if (data.type === "STATUS_UPDATE" && data.status) {
       localStorage.setItem("AUTO_FIGHT_STATUS", data.status);
+
+      const found = openedTabs.find(item => item.tab === event.source);
+
+      if (found) {
+        found.status = data.status;
+      }
     }
   });
+
+  window.onload = initUI;
 </script>
+
 </body>
 </html>
